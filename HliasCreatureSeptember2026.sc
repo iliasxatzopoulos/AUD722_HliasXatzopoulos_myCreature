@@ -1,38 +1,58 @@
 HliasCreatureSeptember2026 : Creature {
 
-    // --------------------------------------------------
+    // ==================================================
     // Κοινός sound engine
-    // --------------------------------------------------
+    // Body = Dog Bark
+    // Soul = SinOsc
+    // Body * Soul = Ring Modulation
+    // ==================================================
 
-    makeSound { |rate = 1, modFreq = 0, amp = 0.7, dur = 5, mode = 0|
+    makeSound { |rate = 1, modFreq = 440, amp = 0.7, dur = 5, mode = 0|
 
         this add: {
+
             var env;
-            var sound;
+            var body;
+            var soul;
+            var signal;
             var grains;
             var echo;
-            var mod;
-            var signal;
 
+            // Amplitude envelope
             env = EnvGen.kr(
                 Env.linen(0.1, dur - 0.2, 0.1),
                 doneAction: 2
             );
 
-            sound = PlayBuf.ar(
+            // BODY - dog bark
+            body = PlayBuf.ar(
                 1,
                 this.buffer.bufnum,
                 rate,
-                loop: 0
+                loop: 1
             );
 
-            // Normal bark
+            // SOUL - oscillator
+            soul = SinOsc.ar(modFreq);
+
+            // RING MODULATION
+            signal = body * soul;
+
+            // ------------------------------------------
+            // MODE 0 - natural / simple
+            // ------------------------------------------
+
             if(mode == 0, {
-                signal = sound;
+                signal = signal;
             });
 
-            // Granular / digital
+
+            // ------------------------------------------
+            // MODE 1 - granular / digital
+            // ------------------------------------------
+
             if(mode == 1, {
+
                 grains = GrainBuf.ar(
                     2,
                     Impulse.kr(14),
@@ -41,29 +61,36 @@ HliasCreatureSeptember2026 : Creature {
                     rate,
                     LFNoise1.kr(1).range(0, 1),
                     4,
-                    LFNoise2.kr(0.5)
+                    LFNoise2.kr(0.5),
+                    64
                 );
 
-                signal = (sound * 0.3) + (grains * 0.7);
+                signal = (signal * 0.35) + (grains * 0.65);
             });
 
-            // Slow + echo
+
+            // ------------------------------------------
+            // MODE 2 - slow + echo
+            // ------------------------------------------
+
             if(mode == 2, {
+
                 echo = CombC.ar(
-                    sound,
+                    signal,
                     1.0,
                     0.32,
                     1.4
                 );
 
-                signal = sound + (echo * 0.4);
+                signal = signal + (echo * 0.4);
             });
 
-            // Robotic / electronic
+
+            // ------------------------------------------
+            // MODE 3 - robotic / electronic
+            // ------------------------------------------
+
             if(mode == 3, {
-                mod = SinOsc.ar(modFreq);
-                
-                signal = sound * mod;
 
                 signal = BPF.ar(
                     signal,
@@ -72,34 +99,39 @@ HliasCreatureSeptember2026 : Creature {
                 );
             });
 
-            // Danger / distorted
-            if(mode == 4, {
-                mod = SinOsc.ar(modFreq);
 
-                signal = sound * mod;
+            // ------------------------------------------
+            // MODE 4 - danger / distortion
+            // ------------------------------------------
+
+            if(mode == 4, {
 
                 signal = (signal * 5).tanh;
 
-                signal = signal + (
-                    sound * 0.25
-                );
+                signal = signal + (body * 0.2);
             });
 
-            signal * env * amp ! 2;
+
+            // Envelope + amplitude
+            signal = signal * env * amp;
+
+            // Stereo output
+            signal ! 2;
 
         }.play;
     }
 
 
-    // --------------------------------------------------
+    // ==================================================
     // DAWN
-    // --------------------------------------------------
+    // ==================================================
 
     dawn {
         "Hlias Creature: dawn".postln;
 
         this.makeSound(
             rate: 1.0,
+            modFreq: 440,
             amp: 0.7,
             dur: 6,
             mode: 0
@@ -107,15 +139,16 @@ HliasCreatureSeptember2026 : Creature {
     }
 
 
-    // --------------------------------------------------
+    // ==================================================
     // DAY
-    // --------------------------------------------------
+    // ==================================================
 
     day {
         "Hlias Creature: day".postln;
 
         this.makeSound(
             rate: 1.15,
+            modFreq: 180,
             amp: 0.6,
             dur: 8,
             mode: 1
@@ -123,15 +156,16 @@ HliasCreatureSeptember2026 : Creature {
     }
 
 
-    // --------------------------------------------------
+    // ==================================================
     // DUSK
-    // --------------------------------------------------
+    // ==================================================
 
     dusk {
         "Hlias Creature: dusk".postln;
 
         this.makeSound(
             rate: 0.65,
+            modFreq: 80,
             amp: 0.6,
             dur: 7,
             mode: 2
@@ -139,9 +173,9 @@ HliasCreatureSeptember2026 : Creature {
     }
 
 
-    // --------------------------------------------------
+    // ==================================================
     // NIGHT
-    // --------------------------------------------------
+    // ==================================================
 
     night {
         "Hlias Creature: night".postln;
@@ -156,9 +190,9 @@ HliasCreatureSeptember2026 : Creature {
     }
 
 
-    // --------------------------------------------------
+    // ==================================================
     // DANGER
-    // --------------------------------------------------
+    // ==================================================
 
     danger {
         "Hlias Creature: danger".postln;
